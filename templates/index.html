@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="h1_title">Create new project</h1>
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.title.label }}<br>
+        {{ form.title(class="form-control") }}<br>
+        {% for error in form.title.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.github_link.label }}<br>
+        {{ form.github_link(class="form-control") }}<br>
+        {% for error in form.github_link.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+    </p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    <div>{{ message }}</div>
+</form>
+<h1 class="h1_title">Projects</h1>
+<table class="table text-center">
+    {% for project in projects %}
+        <tr><td><a href="/projects/{{ user_id }}/{{ project.id }}" class="project_link">{{ project.title }}</a></td></tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

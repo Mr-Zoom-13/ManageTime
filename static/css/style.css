@@ -1,0 +1,85 @@
+body {
+}
+
+.h1_title {
+  font-size: 48px;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 200;
+
+  text-align: center;
+  line-height: 59px;
+
+  padding: 0 64px;
+  margin: 0;
+  color: #58a70a;
+}
+
+.stopwatch {
+  display: grid;
+  justify-items: center;
+  grid-row-gap: 23px;
+  width: 100%;
+  padding-top: 25px;
+}
+
+.circle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  height: 333px;
+  width: 333px;
+
+  border: 2px solid;
+  border-radius: 50%;
+}
+
+.time {
+  font-family: "Roboto Mono", monospace;
+  font-weight: 300;
+  font-size: 48px;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+
+  width: 187px;
+}
+
+button {
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+  border: none;
+  margin: 0;
+  outline: none;
+}
+
+#playButton {
+  display: block;
+}
+
+#pauseButton {
+  display: none;
+}
+
+.title_app {
+    background-color: chartreuse;
+    font-family: "Title App";
+    height: 55px;
+}
+
+@font-face {
+    font-family: 'Title App';
+    src: url("../fonts/PatrickHand-Regular.ttf");
+}
+
+.project_link {
+    text-decoration: none;
+    color: black;
+}
+
+.project_link:hover {
+    color: green;
+}
