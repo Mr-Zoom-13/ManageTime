@@ -10,6 +10,6 @@ class Task(SqlAlchemyBase, SerializerMixin):
                            primary_key=True, autoincrement=True)
     project_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('projects.id'))
     title = sqlalchemy.Column(sqlalchemy.String)
-    duration = sqlalchemy.Column(sqlalchemy.Integer)
+    duration = sqlalchemy.Column(sqlalchemy.Integer, default=0)
     start_time = sqlalchemy.Column(sqlalchemy.DateTime)
     project = orm.relation('Project', viewonly=True)

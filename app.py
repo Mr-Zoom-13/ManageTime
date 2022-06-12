@@ -94,7 +94,13 @@ def projects_func(user_id, project_id):
             task = Task(title=form.title.data, project_id=project.id)
             project.tasks.append(task)
             db_sess.commit()
-        return render_template('project.html', project=project, form=form, back='/main')
+        result = []
+        for task in project.tasks:
+            days = divmod(task.duration, 86400)[0]
+            hours = divmod(task.duration - days * 86400, 3600)[0]
+            minutes = divmod(task.duration - hours * 3600 - days * 86400, 60)[0]
+            result.append([int(days), int(hours), int(minutes)])
+        return render_template('project.html', project=project, form=form, back='/main', result=result)
     else:
         return redirect('/main')
 

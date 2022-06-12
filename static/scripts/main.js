@@ -43,7 +43,7 @@ function start(this_) {
     task = $(this_).data('task')
     $(this_).fadeToggle(1)
     my_tr = $("#" + String(user) + "-" + String(project) + "-" + String(task))
-    my_tr.children('td', 'th').css('background-color', ' greenyellow')
+    my_tr.css('background-color', ' greenyellow')
     $('#stop-' + String(user) + "-" + String(project) + "-" + String(task)).fadeToggle(1)
     fetch('/api/start-stopwatch', {
         method: 'POST',
@@ -67,7 +67,7 @@ function stop(this_) {
     $(this_).fadeToggle(1)
     $('#start-' + String(user) + "-" + String(project) + "-" + String(task)).fadeToggle(1)
     my_tr = $("#" + String(user) + "-" + String(project) + "-" + String(task))
-    my_tr.children('td', 'th').css('background-color', 'transparent')
+    my_tr.css('background-color', 'transparent')
     fetch('/api/stop-stopwatch', {
         method: 'POST',
         headers: {
@@ -94,8 +94,9 @@ function reset(this_) {
             $('#start-' + String(user) + "-" + String(project) + "-" + String(task)).fadeToggle(1)
             $('#stop-' + String(user) + "-" + String(project) + "-" + String(task)).fadeToggle(1)
             my_tr = $("#" + String(user) + "-" + String(project) + "-" + String(task))
-            my_tr.children('td', 'th').css('background-color', 'transparent')
+            my_tr.css('background-color', 'transparent')
         }
+        $('#duration-' + String(user) + "-" + String(project) + "-" + String(task)).html('Duration: Days: 0; Hours: 0; Minutes: 0')
         fetch('/api/reset-stopwatch', {
             method: 'POST',
             headers: {
