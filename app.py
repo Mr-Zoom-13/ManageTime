@@ -1,3 +1,5 @@
+import json
+import datetime
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from forms.login import LoginForm
@@ -135,6 +137,52 @@ def delete_task():
         project = db_sess.query(Project).get(request.json['project_id'])
         task = db_sess.query(Task).get(request.json['task_id'])
         project.tasks.remove(task)
+        db_sess.commit()
+        return 'success'
+    return 'access deny'
+
+
+@app.route('/api/start-stopwatch', methods=['GET', 'POST'])
+@login_required
+def start_stopwatch():
+    if current_user.id == request.json['user_id']:
+        db_sess = db_session.create_session()
+        project = db_sess.query(Project).get(request.json['project_id'])
+        task = db_sess.query(Task).get(request.json['task_id'])
+        task.start_time = datetime.datetime.now()
+        db_sess.commit()
+        return 'success'
+    return 'access deny'
+
+
+@app.route('/api/stop-stopwatch', methods=['GET', 'POST'])
+@login_required
+def stop_stopwatch():
+    if current_user.id == request.json['user_id']:
+        db_sess = db_session.create_session()
+        project = db_sess.query(Project).get(request.json['project_id'])
+        task = db_sess.query(Task).get(request.json['task_id'])
+        duration = datetime.datetime.now() - task.start_time
+        seconds = duration.total_seconds()
+        task.duration += seconds
+        task.start_time = None
+        db_sess.commit()
+        days = divmod(task.duration, 86400)[0]
+        hours = divmod(task.duration - days * 86400, 3600)[0]
+        minutes = divmod(task.duration - hours * 3600 - days * 86400, 60)[0]
+        return json.dumps({'days': days, 'hours': hours, 'minutes': minutes})
+    return 'access deny'
+
+
+@app.route('/api/reset-stopwatch', methods=['GET', 'POST'])
+@login_required
+def reset_stopwatch():
+    if current_user.id == request.json['user_id']:
+        db_sess = db_session.create_session()
+        project = db_sess.query(Project).get(request.json['project_id'])
+        task = db_sess.query(Task).get(request.json['task_id'])
+        task.duration = 0
+        task.start_time = None
         db_sess.commit()
         return 'success'
     return 'access deny'
