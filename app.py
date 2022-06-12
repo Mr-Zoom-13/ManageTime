@@ -118,11 +118,23 @@ def tasks_func(user_id, project_id, task_id):
 @app.route('/api/delete-project', methods=['GET', 'POST'])
 @login_required
 def delete_project():
-    print(request.json)
     if current_user.id == request.json['user_id']:
         db_sess = db_session.create_session()
         project = db_sess.query(Project).get(request.json['project_id'])
         db_sess.delete(project)
+        db_sess.commit()
+        return 'success'
+    return 'access deny'
+
+
+@app.route('/api/delete-task', methods=['GET', 'POST'])
+@login_required
+def delete_task():
+    if current_user.id == request.json['user_id']:
+        db_sess = db_session.create_session()
+        project = db_sess.query(Project).get(request.json['project_id'])
+        task = db_sess.query(Task).get(request.json['task_id'])
+        project.tasks.remove(task)
         db_sess.commit()
         return 'success'
     return 'access deny'
