@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="h1_title">{{ project.title }}</h1>
+<h1 class="h1_title">Create new task</h1>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.title.label }}<br>
+        {{ form.title(class="form-control") }}<br>
+        {% for error in form.title.errors %}
+            <div class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+        {% endfor %}
+    </p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+    <div>{{ message }}</div>
+</form>
+<h1 class="h1_title">Tasks</h1>
+<table class="table text-center">
+    {% for task in project.tasks %}
+        <tr><td><a href="/tasks/{{ project.user_id }}/{{ project.id }}/{{ task.id }}" class="project_link">{{ task.title }}</a></td></tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

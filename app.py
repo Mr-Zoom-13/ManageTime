@@ -3,6 +3,7 @@ from flask_login import LoginManager, login_required, login_user, logout_user, c
 from forms.login import LoginForm
 from forms.register import RegisterForm
 from forms.add_project import AddProjectForm
+from forms.add_task import AddTaskForm
 from data import db_session
 from data.users import User
 from data.projects import Project
@@ -76,10 +77,34 @@ def index():
     return render_template('index.html', form=form, projects=projects, user_id=current_user.id)
 
 
-@app.route('/projects/<int:user_id>/<int:project_id>')
+@app.route('/projects/<int:user_id>/<int:project_id>', methods=['GET', 'POST'])
 def projects_func(user_id, project_id):
     if current_user.id == user_id:
-        pass
+        db_sess = db_session.create_session()
+        form = AddTaskForm()
+        project = db_sess.query(Project).get(project_id)
+        if form.validate_on_submit():
+            task = Task(title=form.title.data, project_id=project.id)
+            project.tasks.append(task)
+            db_sess.commit()
+        return render_template('project.html', project=project, form=form)
+    else:
+        return redirect('/main')
+
+
+@app.route('/tasks/<int:user_id>/<int:project_id>/<int:task_id>', methods=['GET', 'POST'])
+def tasks_func(user_id, project_id, task_id):
+    if current_user.id == user_id:
+        db_sess = db_session.create_session()
+        form = AddTaskForm()
+        project = db_sess.query(Project).get(project_id)
+        task = db_sess.query(Task).get(task_id)
+        if form.validate_on_submit():
+            task.title = form.title.data
+            db_sess.commit()
+        else:
+            form.title.data = task.title
+        return render_template('task.html', project=project, task=task, form=form)
     else:
         return redirect('/main')
 
