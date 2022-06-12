@@ -24,6 +24,9 @@
     {% if not start is defined %}
         <a href="/logout"><img src="../../../static/img/exit.png" class="exit"></a>
     {% endif %}
+    {% if back is defined %}
+        <a href="{{ back }}" class="a_back"><<</a>
+    {% endif %}
 </header>
 {% block content %}
 {% endblock %}

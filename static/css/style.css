@@ -90,3 +90,15 @@ button {
     top: 0;
     left: 97%;
 }
+
+.a_back {
+    position: absolute;
+    text-decoration: none;
+    color: gray;
+    font-size: 33px;
+    margin-left: 100px;
+}
+
+.refactor_but {
+    margin-top: 15px;
+}

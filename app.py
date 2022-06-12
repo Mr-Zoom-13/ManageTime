@@ -92,7 +92,7 @@ def projects_func(user_id, project_id):
             task = Task(title=form.title.data, project_id=project.id)
             project.tasks.append(task)
             db_sess.commit()
-        return render_template('project.html', project=project, form=form)
+        return render_template('project.html', project=project, form=form, back='/main')
     else:
         return redirect('/main')
 
@@ -110,7 +110,7 @@ def tasks_func(user_id, project_id, task_id):
             db_sess.commit()
         else:
             form.title.data = task.title
-        return render_template('task.html', project=project, task=task, form=form)
+        return render_template('task.html', project=project, task=task, form=form, back=f"/projects/{user_id}/{project_id}")
     else:
         return redirect('/main')
 
