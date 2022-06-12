@@ -83,3 +83,10 @@ button {
 .project_link:hover {
     color: green;
 }
+
+.exit {
+    position: absolute;
+    width: 50px;
+    top: 0;
+    left: 97%;
+}

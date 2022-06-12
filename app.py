@@ -38,8 +38,8 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user)
             return redirect('/main')
-        return render_template('login.html', form=form, message="Incorrect data!")
-    return render_template('login.html', form=form)
+        return render_template('login.html', form=form, message="Incorrect data!", start=True)
+    return render_template('login.html', form=form, start=True)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -51,17 +51,17 @@ def register():
             User.login == form.login.data).first()
         if check_already_exists:
             return render_template('register.html', form=form,
-                                   message="Account with this login is already exists!")
+                                   message="Account with this login is already exists!", start=True)
         if form.password.data != form.password_again.data:
             return render_template('register.html', form=form,
-                                   message="Passwords don't match!")
+                                   message="Passwords don't match!", start=True)
         user = User(login=form.login.data)
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
         login_user(user)
         return redirect('/main')
-    return render_template('register.html', form=form)
+    return render_template('register.html', form=form, start=True)
 
 
 @app.route('/main', methods=['GET', 'POST'])
