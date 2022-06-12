@@ -78,6 +78,7 @@ def index():
 
 
 @app.route('/projects/<int:user_id>/<int:project_id>', methods=['GET', 'POST'])
+@login_required
 def projects_func(user_id, project_id):
     if current_user.id == user_id:
         db_sess = db_session.create_session()
@@ -97,6 +98,7 @@ def projects_func(user_id, project_id):
 
 
 @app.route('/tasks/<int:user_id>/<int:project_id>/<int:task_id>', methods=['GET', 'POST'])
+@login_required
 def tasks_func(user_id, project_id, task_id):
     if current_user.id == user_id:
         db_sess = db_session.create_session()
@@ -111,6 +113,19 @@ def tasks_func(user_id, project_id, task_id):
         return render_template('task.html', project=project, task=task, form=form)
     else:
         return redirect('/main')
+
+
+@app.route('/api/delete-project', methods=['GET', 'POST'])
+@login_required
+def delete_project():
+    print(request.json)
+    if current_user.id == request.json['user_id']:
+        db_sess = db_session.create_session()
+        project = db_sess.query(Project).get(request.json['project_id'])
+        db_sess.delete(project)
+        db_sess.commit()
+        return 'success'
+    return 'access deny'
 
 
 def main():

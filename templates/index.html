@@ -27,7 +27,7 @@
 <h1 class="h1_title">Projects</h1>
 <table class="table text-center">
     {% for project in projects %}
-        <tr><td><a href="/projects/{{ user_id }}/{{ project.id }}" class="project_link">{{ project.title }}</a></td></tr>
+        <tr id="{{ user_id }} {{ project.id }}"><td><a href="/projects/{{ user_id }}/{{ project.id }}" class="project_link">{{ project.title }}</a></td><td><button onclick="delete_project(this)" class="btn btn-danger text-white" data-project="{{ project.id }}" data-user="{{ project.user_id }}">X</button></td></tr>
     {% endfor %}
 </table>
 
