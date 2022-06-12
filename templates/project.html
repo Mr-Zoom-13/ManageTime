@@ -1,17 +1,23 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="h1_title">{{ project.title }}</h1>
+<h1 class="h1_title">Refactor project</h1>
+<form method="post">
+    <label for="title_project">Title</label>
+    <br>
+    <input class="form-control" type="text" value="{{ project.title }}" id="title_project" name="title_project">
+    <br>
+    <label for="github_link">Github link</label>
+    <br>
+    <input class="form-control" type="text" value="{{ project.github_link }}" id="github_link" name="github_link" aria-describedby="basic-addon3">
+    <input type="submit" value="Refactor" class="btn btn-primary">
+</form>
 <h1 class="h1_title">Create new task</h1>
 <form method="post">
     {{ form.hidden_tag() }}
     <p>
         {{ form.title.label }}<br>
         {{ form.title(class="form-control") }}<br>
-        {% for error in form.title.errors %}
-            <div class="alert alert-danger" role="alert">
-                {{ error }}
-            </div>
-        {% endfor %}
     </p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
     <div>{{ message }}</div>

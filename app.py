@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from forms.login import LoginForm
 from forms.register import RegisterForm
@@ -83,6 +83,10 @@ def projects_func(user_id, project_id):
         db_sess = db_session.create_session()
         form = AddTaskForm()
         project = db_sess.query(Project).get(project_id)
+        if 'title_project' in request.values:
+            project.title = request.values['title_project']
+            project.github_link = request.values['github_link']
+            db_sess.commit()
         if form.validate_on_submit():
             task = Task(title=form.title.data, project_id=project.id)
             project.tasks.append(task)
