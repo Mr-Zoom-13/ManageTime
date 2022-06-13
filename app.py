@@ -76,7 +76,23 @@ def index():
         db_sess.add(project)
         db_sess.commit()
     projects = db_sess.query(Project).filter(Project.user == current_user).all()
-    return render_template('index.html', form=form, projects=projects, user_id=current_user.id)
+    result = []
+    for project in projects:
+        days = 0
+        hours = 0
+        minutes = 0
+        is_use = False
+        for task in project.tasks:
+            day = divmod(task.duration, 86400)[0]
+            hour = divmod(task.duration - day * 86400, 3600)[0]
+            minute = divmod(task.duration - hour * 3600 - day * 86400, 60)[0]
+            days += day
+            hours += hour
+            minutes += minute
+            if task.start_time:
+                is_use = True
+        result.append([int(days), int(hours), int(minutes), is_use])
+    return render_template('index.html', form=form, projects=projects, user_id=current_user.id, result=result)
 
 
 @app.route('/projects/<int:user_id>/<int:project_id>', methods=['GET', 'POST'])

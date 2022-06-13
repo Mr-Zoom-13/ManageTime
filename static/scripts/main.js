@@ -80,7 +80,7 @@ function stop(this_) {
             return response.json();
         })
         .then((myjson) => {
-            $('#duration-' + String(user) + "-" + String(project) + "-" + String(task)).html('Duration: Days: ' + String(myjson.days) + '; Hours: ' + String(myjson.hours) + '; Minutes: ' + String(myjson.minutes))
+            $('#duration-' + String(user) + "-" + String(project) + "-" + String(task)).html('Duration: Days: ' + String(myjson.days) + '; Hours: ' + String(myjson.hours) + '; Minutes: ' + String(myjson.minutes) + ";")
         });
 }
 
@@ -96,7 +96,7 @@ function reset(this_) {
             my_tr = $("#" + String(user) + "-" + String(project) + "-" + String(task))
             my_tr.css('background-color', 'transparent')
         }
-        $('#duration-' + String(user) + "-" + String(project) + "-" + String(task)).html('Duration: Days: 0; Hours: 0; Minutes: 0')
+        $('#duration-' + String(user) + "-" + String(project) + "-" + String(task)).html('Duration: Days: 0; Hours: 0; Minutes: 0;')
         fetch('/api/reset-stopwatch', {
             method: 'POST',
             headers: {

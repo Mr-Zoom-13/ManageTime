@@ -31,7 +31,7 @@
             <tr id="{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}">
         {% endif %}
             <td><a href="/tasks/{{ project.user_id }}/{{ project.id }}/{{ project.tasks[i].id }}" class="project_link">{{ project.tasks[i].title }}</a></td>
-            <td><span id="duration-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}">Duration: Days: {{ result[i][0] }}; Hours: {{ result[i][1] }}; Minutes {{ result[i][2] }}:</span></td>
+            <td><span id="duration-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}">Duration: Days: {{ result[i][0] }}; Hours: {{ result[i][1] }}; Minutes: {{ result[i][2] }};</span></td>
             {% if project.tasks[i].start_time %}
                 <td>
                     <button style="display: none" id="start-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}" onclick="start(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}"><img style="width: 50px" id="playButton" src="https://res.cloudinary.com/https-tinloof-com/image/upload/v1593360448/blog/time-in-js/play-button_opkxmt.svg" /></button>
