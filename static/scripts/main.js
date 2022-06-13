@@ -1,40 +1,46 @@
 function delete_project(this_) {
-    user = $(this_).data('user')
-    project = $(this_).data('project')
-    document.getElementById(String(user) + " " + String(project)).remove()
-    fetch('/api/delete-project', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json;charset=utf-8',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({"user_id": user, "project_id": project})
-    })
-        .then((response) => {
-            return response.json();
+    if (confirm("Are you sure you want to delete the project?")) {
+        user = $(this_).data('user')
+        project = $(this_).data('project')
+        document.getElementById(String(user) + " " + String(project)).remove()
+        fetch('/api/delete-project', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({"user_id": user, "project_id": project})
         })
-        .then((myjson) => {
-        });
+            .then((response) => {
+                return response.json();
+            })
+            .then((myjson) => {
+            });
+    }
+
 }
 
 function delete_task(this_) {
-    user = $(this_).data('user')
-    project = $(this_).data('project')
-    task = $(this_).data('task')
-    document.getElementById(String(user) + "-" + String(project) + "-" + String(task)).remove()
-    fetch('/api/delete-task', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json;charset=utf-8',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({"user_id": user, "project_id": project, "task_id": task})
-    })
-        .then((response) => {
-            return response.json();
+    if (confirm("Are you sure you want to delete the task?")) {
+        user = $(this_).data('user')
+        project = $(this_).data('project')
+        task = $(this_).data('task')
+        document.getElementById(String(user) + "-" + String(project) + "-" + String(task)).remove()
+        fetch('/api/delete-task', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({"user_id": user, "project_id": project, "task_id": task})
         })
-        .then((myjson) => {
-        });
+            .then((response) => {
+                return response.json();
+            })
+            .then((myjson) => {
+            });
+    }
+
 }
 
 function start(this_) {
@@ -112,4 +118,25 @@ function reset(this_) {
             });
     }
 
+}
+
+function tableSearch() {
+    var phrase = document.getElementById('search-text');
+    var table = document.getElementById('info-table');
+    var regPhrase = new RegExp(phrase.value, 'i');
+    var flag = false;
+    for (var i = 1; i < table.rows.length; i++) {
+        flag = false;
+        for (var j = table.rows[i].cells.length - 1; j >= 0; j--) {
+            flag = regPhrase.test(table.rows[i].cells[j].innerHTML);
+            if (flag) break;
+        }
+        console.log(flag)
+        if (flag) {
+            table.rows[i].style.display = "";
+        } else {
+            table.rows[i].style.display = "none";
+        }
+
+    }
 }

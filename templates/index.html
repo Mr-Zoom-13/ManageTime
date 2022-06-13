@@ -25,7 +25,9 @@
     <div>{{ message }}</div>
 </form>
 <h1 class="h1_title">Projects</h1>
-<table class="table text-center">
+<input type="text" onkeyup="tableSearch()" id="search-text" placeholder="Search..." class="searcher">
+<table class="table text-center" id="info-table">
+    <tr><th></th><th></th><th></th></tr>
     {% for i in range(projects|length) %}
         {% if result[i][3] %}
             <tr style="background-color: greenyellow" id="{{ user_id }} {{ projects[i].id }}">
