@@ -1,5 +1,6 @@
 import json
 import datetime
+from waitress import serve
 from flask import Flask, render_template, redirect, request
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from forms.login import LoginForm
@@ -212,7 +213,7 @@ def reset_stopwatch():
 
 def main():
     db_session.global_init('db/manage_time.db')
-    app.run()
+    serve(app, host="0.0.0.0", port=5000)
 
 
 if __name__ == '__main__':
