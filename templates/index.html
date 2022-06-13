@@ -27,7 +27,7 @@
 <h1 class="h1_title">Projects</h1>
 <input type="text" onkeyup="tableSearch()" id="search-text" placeholder="Search..." class="searcher">
 <table class="table text-center" id="info-table">
-    <tr><th></th><th></th><th></th></tr>
+    <tr><th></th><th></th><th></th><th></th></tr>
     {% for i in range(projects|length) %}
         {% if result[i][3] %}
             <tr style="background-color: greenyellow" id="{{ user_id }} {{ projects[i].id }}">
@@ -35,6 +35,13 @@
             <tr id="{{ user_id }} {{ projects[i].id }}">
         {% endif %}
             <td><a href="/projects/{{ user_id }}/{{ projects[i].id }}" class="project_link">{{ projects[i].title }}</a></td>
+            <td>
+                {% if projects[i].github_link %}
+                    <a href="{{ projects[i].github_link }}"><img src="../../../static/img/github.jpg" alt="github link" class="img_github"></a>
+                {% else %}
+                    <span>--</span>
+                {% endif %}
+            </td>
             <td>Duration: Days: {{ result[i][0] }}; Hours: {{ result[i][1] }}; Minutes: {{ result[i][2] }}</td>
             <td><button onclick="delete_project(this)" class="btn btn-danger text-white" data-project="{{ projects[i].id }}" data-user="{{ projects[i].user_id }}">X</button></td>
         </tr>
