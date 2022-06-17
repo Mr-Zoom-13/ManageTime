@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="MobileOptimized" content="320" />
+    <meta name="keywords" content="managetime,  управление временем, managetime орск, ManageTime Orsk, управление временем орск, сервис для управления временем">
+    <meta name="description" content="ManageTime - this is a service for viewing and collecting statistics on time spent on tasks and on the project as a whole">
     <title>ManageTime</title>
+    <link rel="icon" type="image/png" href="../../../static/img/icon.png">
     <link rel="stylesheet"
                         href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
                         integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1"
@@ -20,7 +24,7 @@
 </head>
 <body>
 <header>
-    <h1 class="title_app"><a href="https://github.com/Mr-Zoom-13/ManageTime" class="project_link">ManageTime</a></h1>
+    <h1 class="title_app"><a href="https://github.com/Mr-Zoom-13/ManageTime" class="project_link"><div class="title_image"></div><span class="title_app_text">ManageTime</span></a></h1>
     {% if not start is defined %}
         <a href="/logout"><img src="../../../static/img/exit.png" class="exit"></a>
     {% endif %}

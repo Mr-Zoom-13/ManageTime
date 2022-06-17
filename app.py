@@ -11,11 +11,23 @@ from data import db_session
 from data.users import User
 from data.projects import Project
 from data.tasks import Task
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'top_secret_keyt'
 login_manager = LoginManager()
 login_manager.init_app(app)
+admin = Admin(app)
+
+
+class MyModelView(ModelView):
+    def is_accessible(self):
+        try:
+            if current_user.id == 1:
+                return True
+        except AttributeError:
+            return False
 
 
 @login_manager.user_loader
@@ -213,6 +225,10 @@ def reset_stopwatch():
 
 def main():
     db_session.global_init('db/manage_time.db')
+    db_sess = db_session.create_session()
+    admin.add_view(MyModelView(User, db_sess))
+    admin.add_view(MyModelView(Project, db_sess))
+    admin.add_view(MyModelView(Task, db_sess))
     serve(app, host="0.0.0.0", port=5001)
 
 

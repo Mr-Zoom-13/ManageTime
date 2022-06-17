@@ -81,7 +81,11 @@ button {
 }
 
 .project_link:hover {
-    color: green;
+    color: #0FA64E;
+
+}
+.project_link:hover .title_image {
+background: url("/static/img/icon2.png");
 }
 
 .exit {
@@ -105,4 +109,15 @@ button {
 
 .img_github {
     width: 50px;
+}
+
+.title_image {
+    width: 50px;
+    height: 50px;
+    background: url("/static/img/icon.png");
+    display: inline-block;
+}
+
+.title_app_text {
+    position: absolute;
 }
