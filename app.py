@@ -1,7 +1,7 @@
 import json
 import datetime
 from waitress import serve
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, redirect, request, url_for
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from forms.login import LoginForm
 from forms.register import RegisterForm
@@ -52,7 +52,7 @@ def login():
         user = db_sess.query(User).filter(User.login == form.login.data).first()
         if user and user.check_password(form.password.data):
             login_user(user)
-            return redirect('/main')
+            return redirect(url_for("index"), code=302)
         return render_template('login.html', form=form, message="Incorrect data!", start=True)
     return render_template('login.html', form=form, start=True)
 
@@ -66,7 +66,8 @@ def register():
             User.login == form.login.data).first()
         if check_already_exists:
             return render_template('register.html', form=form,
-                                   message="Account with this login is already exists!", start=True)
+                                   message="Account with this login is already exists!",
+                                   start=True)
         if form.password.data != form.password_again.data:
             return render_template('register.html', form=form,
                                    message="Passwords don't match!", start=True)
@@ -85,7 +86,8 @@ def index():
     db_sess = db_session.create_session()
     form = AddProjectForm()
     if form.validate_on_submit():
-        project = Project(title=form.title.data, github_link=form.github_link.data, user_id=current_user.id)
+        project = Project(title=form.title.data, github_link=form.github_link.data,
+                          user_id=current_user.id)
         db_sess.add(project)
         db_sess.commit()
     projects = db_sess.query(Project).filter(Project.user == current_user).all()
@@ -105,7 +107,8 @@ def index():
             if task.start_time:
                 is_use = True
         result.append([int(days), int(hours), int(minutes), is_use])
-    return render_template('index.html', form=form, projects=projects, user_id=current_user.id, result=result)
+    return render_template('index.html', form=form, projects=projects, user_id=current_user.id,
+                           result=result)
 
 
 @app.route('/projects/<int:user_id>/<int:project_id>', methods=['GET', 'POST'])
@@ -129,7 +132,8 @@ def projects_func(user_id, project_id):
             hours = divmod(task.duration - days * 86400, 3600)[0]
             minutes = divmod(task.duration - hours * 3600 - days * 86400, 60)[0]
             result.append([int(days), int(hours), int(minutes)])
-        return render_template('project.html', project=project, form=form, back='/main', result=result)
+        return render_template('project.html', project=project, form=form, back='/main',
+                               result=result)
     else:
         return redirect('/main')
 
@@ -147,7 +151,8 @@ def tasks_func(user_id, project_id, task_id):
             db_sess.commit()
         else:
             form.title.data = task.title
-        return render_template('task.html', project=project, task=task, form=form, back=f"/projects/{user_id}/{project_id}")
+        return render_template('task.html', project=project, task=task, form=form,
+                               back=f"/projects/{user_id}/{project_id}")
     else:
         return redirect('/main')
 
