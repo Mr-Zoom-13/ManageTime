@@ -1,4 +1,4 @@
-# ManageTime
+# ![Icon](https://github.com/Mr-Zoom-13/ManageTime/raw/main/static/img/icon.png) ManageTime
 ## Description
 ManageTime - this is a service for viewing and collecting statistics on time spent on tasks and on the project as a whole
 ## Libraries
