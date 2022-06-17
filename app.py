@@ -52,7 +52,7 @@ def login():
         user = db_sess.query(User).filter(User.login == form.login.data).first()
         if user and user.check_password(form.password.data):
             login_user(user)
-            return redirect(url_for("index"), code=302)
+            return redirect("https://flasktest.school-score.online/main")
         return render_template('login.html', form=form, message="Incorrect data!", start=True)
     return render_template('login.html', form=form, start=True)
 
