@@ -1,0 +1,9 @@
+Flask==2.0.3
+Flask_Admin==1.6.0
+Flask_Login==0.5.0
+Flask_WTF==1.0.0
+SQLAlchemy==1.4.31
+SQLAlchemy_serializer==1.4.1
+waitress==2.1.1
+Werkzeug==2.0.3
+WTForms==3.0.1
