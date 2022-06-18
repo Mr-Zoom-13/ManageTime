@@ -23,11 +23,10 @@ admin = Admin(app)
 
 class MyModelView(ModelView):
     def is_accessible(self):
-        try:
+        if hasattr(current_user, 'id'):
             if current_user.id == 1:
                 return True
-        except AttributeError:
-            return False
+        return False
 
 
 @login_manager.user_loader
@@ -43,9 +42,16 @@ def logout():
     return redirect("/")
 
 
+@app.errorhandler(401)
+def unauthorized(error):
+    return redirect('/')
+
+
 # function to login user
 @app.route('/', methods=['GET', 'POST'])
 def login():
+    if hasattr(current_user, 'id'):
+        return redirect('/main')
     db_sess = db_session.create_session()
     form = LoginForm()
     if form.validate_on_submit():
