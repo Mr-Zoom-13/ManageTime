@@ -19,7 +19,6 @@ app.config['SECRET_KEY'] = 'top_secret_keyt'
 login_manager = LoginManager()
 login_manager.init_app(app)
 admin = Admin(app)
-ADDRESS = "https://managetime.school-score.online/"
 
 
 class MyModelView(ModelView):
@@ -41,7 +40,7 @@ def load_user(user_id):
 @login_required
 def logout():
     logout_user()
-    return redirect(ADDRESS)
+    return redirect("/")
 
 
 # function to login user
@@ -53,7 +52,7 @@ def login():
         user = db_sess.query(User).filter(User.login == form.login.data).first()
         if user and user.check_password(form.password.data):
             login_user(user)
-            return redirect(ADDRESS + "main")
+            return redirect("/main")
         return render_template('login.html', form=form, message="Incorrect data!", start=True)
     return render_template('login.html', form=form, start=True)
 
@@ -77,7 +76,7 @@ def register():
         db_sess.add(user)
         db_sess.commit()
         login_user(user)
-        return redirect(ADDRESS + 'main')
+        return redirect('/main')
     return render_template('register.html', form=form, start=True)
 
 
@@ -136,7 +135,7 @@ def projects_func(user_id, project_id):
         return render_template('project.html', project=project, form=form, back='/main',
                                result=result)
     else:
-        return redirect(ADDRESS + 'main')
+        return redirect('/main')
 
 
 @app.route('/tasks/<int:user_id>/<int:project_id>/<int:task_id>', methods=['GET', 'POST'])
@@ -155,7 +154,7 @@ def tasks_func(user_id, project_id, task_id):
         return render_template('task.html', project=project, task=task, form=form,
                                back=f"/projects/{user_id}/{project_id}")
     else:
-        return redirect(ADDRESS + 'main')
+        return redirect('/main')
 
 
 @app.route('/api/delete-project', methods=['GET', 'POST'])
