@@ -41,6 +41,7 @@
             <tr id="{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}">
         {% endif %}
             <td><a href="/tasks/{{ project.user_id }}/{{ project.id }}/{{ project.tasks[i].id }}" class="project_link">{{ project.tasks[i].title }}</a></td>
+            <td><a href="/unload-task/{{ project.user_id }}/{{ project.id }}/{{ project.tasks[i].id }}" class="project_link"><img src="/static/img/upload.png" class="img_github"></a></td>
             <td><span id="duration-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}">Duration: Days: {{ result[i][0] }}; Hours: {{ result[i][1] }}; Minutes: {{ result[i][2] }};</span></td>
             {% if project.tasks[i].start_time %}
                 <td>

@@ -1,7 +1,10 @@
 import json
 import datetime
 from waitress import serve
-from flask import Flask, render_template, redirect, request
+import xlsxwriter
+import os
+import time
+from flask import Flask, render_template, redirect, request, send_file, after_this_request
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from forms.login import LoginForm
 from forms.register import RegisterForm
@@ -163,6 +166,31 @@ def tasks_func(user_id, project_id, task_id):
         return redirect('/main')
 
 
+@app.route('/unload-project/<int:user_id>/<int:project_id>', methods=['GET', 'POST'])
+@login_required
+def unload_project(user_id, project_id):
+    if current_user.id == user_id:
+        db_sess = db_session.create_session()
+        project = db_sess.query(Project).get(project_id)
+        create_unload_file(eval(project.duration_per_dates), project.title)
+        return send_file('unload.xlsx', download_name=project.title + '.xlsx')
+    else:
+        return redirect('/main')
+
+
+@app.route('/unload-task/<int:user_id>/<int:project_id>/<int:task_id>',
+           methods=['GET', 'POST'])
+@login_required
+def unload_task(user_id, project_id, task_id):
+    if current_user.id == user_id:
+        db_sess = db_session.create_session()
+        task = db_sess.query(Task).get(task_id)
+        create_unload_file(eval(task.duration_per_dates), task.title)
+        return send_file('unload.xlsx', download_name=task.title + '.xlsx')
+    else:
+        return redirect('/main')
+
+
 @app.route('/api/delete-project', methods=['GET', 'POST'])
 @login_required
 def delete_project():
@@ -207,10 +235,23 @@ def stop_stopwatch():
     if current_user.id == request.json['user_id']:
         db_sess = db_session.create_session()
         project = db_sess.query(Project).get(request.json['project_id'])
+        tmp_durations_project = eval(project.duration_per_dates)
+        now = str(datetime.date.today())
         task = db_sess.query(Task).get(request.json['task_id'])
+        tmp_durations_task = eval(task.duration_per_dates)
         duration = datetime.datetime.now() - task.start_time
         seconds = duration.total_seconds()
         task.duration += seconds
+        if now not in tmp_durations_project.keys():
+            tmp_durations_project[now] = seconds
+        else:
+            tmp_durations_project[now] += seconds
+        if now not in tmp_durations_task.keys():
+            tmp_durations_task[now] = seconds
+        else:
+            tmp_durations_task[now] += seconds
+        project.duration_per_dates = str(tmp_durations_project)
+        task.duration_per_dates = str(tmp_durations_task)
         task.start_time = None
         db_sess.commit()
         days = divmod(task.duration, 86400)[0]
@@ -232,6 +273,16 @@ def reset_stopwatch():
         db_sess.commit()
         return 'success'
     return 'access deny'
+
+
+def create_unload_file(tmp_durations, title):
+    tmp_durations_keys = list(tmp_durations.keys())
+    workbook = xlsxwriter.Workbook('unload.xlsx')
+    worksheet = workbook.add_worksheet(name=title)
+    for i in range(len(tmp_durations_keys)):
+        worksheet.write(0, i, tmp_durations_keys[i])
+        worksheet.write(1, i, tmp_durations[tmp_durations_keys[i]])
+    workbook.close()
 
 
 def main():
