@@ -11,6 +11,5 @@ class Project(SqlAlchemyBase, SerializerMixin):
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
     title = sqlalchemy.Column(sqlalchemy.String)
     github_link = sqlalchemy.Column(sqlalchemy.String)
-    duration_per_dates = sqlalchemy.Column(sqlalchemy.String, default='{}')
     tasks = orm.relationship('Task', backref="project_to_tasks")
     user = orm.relation('User')

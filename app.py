@@ -2,8 +2,6 @@ import json
 import datetime
 from waitress import serve
 import xlsxwriter
-import os
-import time
 from flask import Flask, render_template, redirect, request, send_file, after_this_request
 from flask_login import LoginManager, login_required, login_user, logout_user, current_user
 from forms.login import LoginForm
@@ -172,7 +170,15 @@ def unload_project(user_id, project_id):
     if current_user.id == user_id:
         db_sess = db_session.create_session()
         project = db_sess.query(Project).get(project_id)
-        create_unload_file(eval(project.duration_per_dates), project.title)
+        tmp_durations_project = {}
+        for task in project.tasks:
+            tmp_durations_task = eval(task.duration_per_dates)
+            for i in tmp_durations_task.keys():
+                if i in tmp_durations_project.keys():
+                    tmp_durations_project[i] += tmp_durations_task[i]
+                else:
+                    tmp_durations_project[i] = tmp_durations_task[i]
+        create_unload_file(tmp_durations_project, project.title)
         return send_file('unload.xlsx', download_name=project.title + '.xlsx')
     else:
         return redirect('/main')
@@ -235,22 +241,16 @@ def stop_stopwatch():
     if current_user.id == request.json['user_id']:
         db_sess = db_session.create_session()
         project = db_sess.query(Project).get(request.json['project_id'])
-        tmp_durations_project = eval(project.duration_per_dates)
         now = str(datetime.date.today())
         task = db_sess.query(Task).get(request.json['task_id'])
         tmp_durations_task = eval(task.duration_per_dates)
         duration = datetime.datetime.now() - task.start_time
         seconds = duration.total_seconds()
         task.duration += seconds
-        if now not in tmp_durations_project.keys():
-            tmp_durations_project[now] = seconds
-        else:
-            tmp_durations_project[now] += seconds
         if now not in tmp_durations_task.keys():
             tmp_durations_task[now] = seconds
         else:
             tmp_durations_task[now] += seconds
-        project.duration_per_dates = str(tmp_durations_project)
         task.duration_per_dates = str(tmp_durations_task)
         task.start_time = None
         db_sess.commit()
@@ -269,6 +269,7 @@ def reset_stopwatch():
         project = db_sess.query(Project).get(request.json['project_id'])
         task = db_sess.query(Task).get(request.json['task_id'])
         task.duration = 0
+        task.duration_per_dates = '{}'
         task.start_time = None
         db_sess.commit()
         return 'success'
@@ -279,9 +280,15 @@ def create_unload_file(tmp_durations, title):
     tmp_durations_keys = list(tmp_durations.keys())
     workbook = xlsxwriter.Workbook('unload.xlsx')
     worksheet = workbook.add_worksheet(name=title)
+    worksheet.write(0, 0, "Date")
+    worksheet.write(1, 0, "Time, min")
+    result = 0
     for i in range(len(tmp_durations_keys)):
-        worksheet.write(0, i, tmp_durations_keys[i])
-        worksheet.write(1, i, tmp_durations[tmp_durations_keys[i]])
+        result += int(divmod(tmp_durations[tmp_durations_keys[i]], 60)[0])
+        worksheet.write(0, i + 1, tmp_durations_keys[i])
+        worksheet.write(1, i + 1, int(divmod(tmp_durations[tmp_durations_keys[i]], 60)[0]))
+    worksheet.write(3, 0, "Result, min: ")
+    worksheet.write(3, 1, result)
     workbook.close()
 
 
