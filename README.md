@@ -11,4 +11,4 @@ libraries used in the project:
 3. Waitress
 4. Werkzeug
 ## How to find it?
-Can be found online at https://managetime.school-score.online or you can run it locally and test it yourself
+Can be found online at [https://managetime.school-score.online](https://www.managetime.mr-zoom.com/) or you can run it locally and test it yourself
