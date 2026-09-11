@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="h1_title">Create new project</h1>
+<h1 class="h1_title">Новый проект</h1>
 <form action="" method="post">
     {{ form.hidden_tag() }}
     <p>
@@ -24,8 +24,8 @@
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
     <div>{{ message }}</div>
 </form>
-<h1 class="h1_title">Projects</h1>
-<input type="text" onkeyup="tableSearch()" id="search-text" placeholder="Search..." class="searcher">
+<h1 class="h1_title">Проекты</h1>
+<input type="search" oninput="tableSearch()" id="search-text" placeholder="Поиск" class="searcher form-control">
 <table class="table text-center" id="info-table">
     <tr><th></th><th></th><th></th><th></th></tr>
     {% for i in range(projects|length) %}
@@ -37,14 +37,14 @@
             <td><a href="/projects/{{ user_id }}/{{ projects[i].id }}" class="project_link">{{ projects[i].title }}</a></td>
             <td>
                 {% if projects[i].github_link %}
-                    <a href="{{ projects[i].github_link }}"><img src="../../../static/img/github.png" alt="github link" class="img_github"></a>
+                    <a href="{{ projects[i].github_link }}" target="_blank" rel="noopener noreferrer"><img src="{{ url_for('static', filename='img/github.png') }}" alt="Репозиторий на GitHub" class="img_github"></a>
                 {% else %}
                     <span>--</span>
                 {% endif %}
             </td>
-            <td><a href="/unload-project/{{ projects[i].user_id }}/{{ projects[i].id }}" class="project_link"><img src="/static/img/upload.png" class="img_github"></a></td>
-            <td>Duration: Days: {{ result[i][0] }}; Hours: {{ result[i][1] }}; Minutes: {{ result[i][2] }}</td>
-            <td><button onclick="delete_project(this)" class="btn btn-danger text-white" data-project="{{ projects[i].id }}" data-user="{{ projects[i].user_id }}">X</button></td>
+            <td><a href="/unload-project/{{ projects[i].user_id }}/{{ projects[i].id }}" class="project_link"><img src="{{ url_for('static', filename='img/upload.png') }}" class="img_github" alt="Скачать статистику"></a></td>
+            <td>Дни: {{ result[i][0] }}; часы: {{ result[i][1] }}; минуты: {{ result[i][2] }}</td>
+            <td><button onclick="delete_project(this)" class="btn btn-danger text-white" data-project="{{ projects[i].id }}" data-user="{{ projects[i].user_id }}" aria-label="Удалить проект">×</button></td>
         </tr>
     {% endfor %}
 </table>

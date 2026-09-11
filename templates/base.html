@@ -1,71 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <!-- Yandex.Webmaster counter -->
-    <meta name="yandex-verification" content="9912c26c96a03281" />
-    <!-- /Yandex.Webmaster counter -->
-    <!-- Yandex.Metrika counter -->
-    <script type="text/javascript">
-        (function (m, e, t, r, i, k, a) {
-            m[i] = m[i] || function () {
-                (m[i].a = m[i].a || []).push(arguments)
-            };
-            m[i].l = 1 * new Date();
-            k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
-        })
-        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-
-        ym(89233311, "init", {
-            clickmap: true,
-            trackLinks: true,
-            accurateTrackBounce: true,
-            webvisor: true
-        });
-    </script>
-    <noscript>
-        <div><img src="https://mc.yandex.ru/watch/89233311"
-                  style="position:absolute; left:-9999px;" alt=""/></div>
-    </noscript>
-    <!-- /Yandex.Metrika counter -->
-    <meta name="MobileOptimized" content="320"/>
-    <meta name="keywords"
-          content="managetime,  управление временем, managetime орск, ManageTime Orsk, управление временем орск, сервис для управления временем">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description"
-          content="ManageTime - this is a service for viewing and collecting statistics on time spent on tasks and on the project as a whole">
+          content="ManageTime — сервис учёта времени по проектам и задачам">
     <title>ManageTime</title>
-    <link rel="icon" type="image/png" href="../../../static/img/icon.png">
+    <link rel="icon" type="image/png"
+          href="{{ url_for('static', filename='img/icon.png') }}">
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css"
           integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1"
           crossorigin="anonymous">
-    <link rel="stylesheet" href="../../../static/css/style.css"/>
-    <script type="text/javascript"
-            src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
-    <link
-            href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;900&display=swap"
-            rel="stylesheet"
-    />
-    <link
-            href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;1,300&display=swap"
-            rel="stylesheet"
-    />
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 <header>
-    <h1 class="title_app"><a href="https://github.com/Mr-Zoom-13/ManageTime"
-                             class="project_link">
-        <div class="title_image"></div>
-        <span class="title_app_text">ManageTime</span></a></h1>
-    {% if not start is defined %}
-        <a href="/logout"><img src="../../../static/img/exit.png" class="exit"></a>
+    <h1 class="title_app">
+        <a href="https://github.com/Mr-Zoom-13/ManageTime" class="project_link">
+            <span class="title_image" aria-hidden="true"></span>
+            <span class="title_app_text">ManageTime</span>
+        </a>
+    </h1>
+    {% if start is not defined %}
+        <form action="{{ url_for('logout') }}" method="post" class="logout_form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="logout_button" aria-label="Выйти">
+                <img src="{{ url_for('static', filename='img/exit.png') }}"
+                     class="exit" alt="Выйти">
+            </button>
+        </form>
     {% endif %}
     {% if back is defined %}
-        <a href="{{ back }}" class="a_back"><<</a>
+        <a href="{{ back }}" class="a_back" aria-label="Назад">←</a>
     {% endif %}
 </header>
-{% block content %}
-{% endblock %}
-<script src="../../../static/scripts/main.js"></script>
+<main class="container-fluid">
+    {% block content %}{% endblock %}
+</main>
+<script src="{{ url_for('static', filename='scripts/main.js') }}"></script>
 </body>
 </html>

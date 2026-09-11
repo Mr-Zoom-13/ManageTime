@@ -1,33 +1,129 @@
-import json
+import ast
 import datetime
-from waitress import serve
+import os
+import re
+import secrets
+from io import BytesIO
+from pathlib import Path
+from urllib.parse import urlparse
+
 import xlsxwriter
-from flask import Flask, render_template, redirect, request, send_file, after_this_request
-from flask_login import LoginManager, login_required, login_user, logout_user, current_user
-from forms.login import LoginForm
-from forms.register import RegisterForm
-from forms.add_project import AddProjectForm
-from forms.add_task import AddTaskForm
+from flask import Flask, abort, jsonify, redirect, render_template, request, send_file
+from flask_admin import Admin, AdminIndexView
+from flask_admin.contrib.sqla import ModelView
+from flask_login import LoginManager, current_user, login_required, login_user, logout_user
+from flask_wtf.csrf import CSRFProtect
+from waitress import serve
+from werkzeug.utils import secure_filename
+
 from data import db_session
-from data.users import User
 from data.projects import Project
 from data.tasks import Task
-from flask_admin import Admin
-from flask_admin.contrib.sqla import ModelView
+from data.users import User
+from forms.add_project import AddProjectForm
+from forms.add_task import AddTaskForm
+from forms.login import LoginForm
+from forms.register import RegisterForm
+
+BASE_DIR = Path(__file__).resolve().parent
+DATABASE_PATH = Path(os.getenv('MANAGETIME_DATABASE', BASE_DIR / 'db' / 'manage_time.db'))
+ADMIN_LOGIN = os.getenv('MANAGETIME_ADMIN_LOGIN', '').strip().casefold()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'top_secret_keyt'
-login_manager = LoginManager()
-login_manager.init_app(app)
-admin = Admin(app)
+app.config['SECRET_KEY'] = os.getenv('MANAGETIME_SECRET_KEY', secrets.token_hex(32))
+app.config['JSON_AS_ASCII'] = False
+CSRFProtect(app)
+
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
+
+def is_admin_user():
+    return (
+        current_user.is_authenticated
+        and bool(ADMIN_LOGIN)
+        and current_user.login.casefold() == ADMIN_LOGIN
+    )
 
 
 class MyModelView(ModelView):
     def is_accessible(self):
-        if hasattr(current_user, 'id'):
-            if current_user.id == 1:
-                return True
-        return False
+        return is_admin_user()
+
+    def inaccessible_callback(self, name, **kwargs):
+        abort(403)
+
+
+class SecureAdminIndexView(AdminIndexView):
+    def is_accessible(self):
+        return is_admin_user()
+
+    def inaccessible_callback(self, name, **kwargs):
+        abort(403)
+
+
+DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+db_session.global_init(str(DATABASE_PATH))
+admin = Admin(app, name='ManageTime', index_view=SecureAdminIndexView())
+admin_session = db_session.create_session()
+admin.add_view(MyModelView(User, admin_session))
+admin.add_view(MyModelView(Project, admin_session))
+admin.add_view(MyModelView(Task, admin_session))
+
+
+def get_owned_project(db_sess, project_id):
+    project = db_sess.query(Project).filter(
+        Project.id == project_id,
+        Project.user_id == current_user.id,
+    ).first()
+    if not project:
+        abort(404)
+    return project
+
+
+def get_owned_task(db_sess, project_id, task_id):
+    project = get_owned_project(db_sess, project_id)
+    task = db_sess.query(Task).filter(
+        Task.id == task_id,
+        Task.project_id == project.id,
+    ).first()
+    if not task:
+        abort(404)
+    return project, task
+
+
+def parse_durations(value):
+    try:
+        durations = ast.literal_eval(value or '{}')
+    except (SyntaxError, ValueError):
+        return {}
+    if not isinstance(durations, dict):
+        return {}
+    return {
+        str(date): max(float(seconds), 0)
+        for date, seconds in durations.items()
+        if isinstance(seconds, (int, float))
+    }
+
+
+def format_duration(seconds):
+    seconds = max(int(seconds or 0), 0)
+    days, remainder = divmod(seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes = remainder // 60
+    return [days, hours, minutes]
+
+
+def normalize_github_link(value):
+    value = (value or '').strip()
+    if not value:
+        return ''
+    parsed = urlparse(value)
+    if parsed.scheme not in {'http', 'https'} or parsed.hostname not in {
+        'github.com', 'www.github.com'
+    }:
+        abort(400, description='Укажите ссылку на GitHub.')
+    return value
 
 
 @login_manager.user_loader
@@ -36,49 +132,45 @@ def load_user(user_id):
     return db_sess.query(User).get(user_id)
 
 
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
-    return redirect("/")
-
-
-@app.errorhandler(401)
-def unauthorized(error):
     return redirect('/')
 
 
-# function to login user
 @app.route('/', methods=['GET', 'POST'])
 def login():
-    if hasattr(current_user, 'id'):
+    if current_user.is_authenticated:
         return redirect('/main')
-    db_sess = db_session.create_session()
     form = LoginForm()
     if form.validate_on_submit():
-        user = db_sess.query(User).filter(User.login == form.login.data).first()
+        db_sess = db_session.create_session()
+        login_value = form.login.data.strip()
+        user = db_sess.query(User).filter(User.login == login_value).first()
         if user and user.check_password(form.password.data):
             login_user(user)
-            return redirect("/main")
-        return render_template('login.html', form=form, message="Incorrect data!", start=True)
+            return redirect('/main')
+        return render_template(
+            'login.html', form=form, message='Неверный логин или пароль.', start=True
+        )
     return render_template('login.html', form=form, start=True)
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    db_sess = db_session.create_session()
+    if current_user.is_authenticated:
+        return redirect('/main')
     form = RegisterForm()
     if form.validate_on_submit():
-        check_already_exists = db_sess.query(User).filter(
-            User.login == form.login.data).first()
-        if check_already_exists:
-            return render_template('register.html', form=form,
-                                   message="Account with this login is already exists!",
-                                   start=True)
-        if form.password.data != form.password_again.data:
-            return render_template('register.html', form=form,
-                                   message="Passwords don't match!", start=True)
-        user = User(login=form.login.data)
+        db_sess = db_session.create_session()
+        login_value = form.login.data.strip()
+        if db_sess.query(User).filter(User.login == login_value).first():
+            return render_template(
+                'register.html', form=form,
+                message='Пользователь с таким логином уже существует.', start=True
+            )
+        user = User(login=login_value)
         user.set_password(form.password.data)
         db_sess.add(user)
         db_sess.commit()
@@ -93,209 +185,198 @@ def index():
     db_sess = db_session.create_session()
     form = AddProjectForm()
     if form.validate_on_submit():
-        project = Project(title=form.title.data, github_link=form.github_link.data,
-                          user_id=current_user.id)
+        project = Project(
+            title=form.title.data.strip(),
+            github_link=normalize_github_link(form.github_link.data),
+            user_id=current_user.id,
+        )
         db_sess.add(project)
         db_sess.commit()
-    projects = db_sess.query(Project).filter(Project.user == current_user).all()
+        return redirect('/main')
+
+    projects = db_sess.query(Project).filter(Project.user_id == current_user.id).all()
     result = []
     for project in projects:
-        seconds = 0
-        is_use = False
-        for task in project.tasks:
-            seconds += task.duration
-            if task.start_time:
-                is_use = True
-        day = divmod(seconds, 86400)[0]
-        hour = divmod(seconds - day * 86400, 3600)[0]
-        minute = divmod(seconds - hour * 3600 - day * 86400, 60)[0]
-        result.append([int(day), int(hour), int(minute), is_use])
-    return render_template('index.html', form=form, projects=projects, user_id=current_user.id,
-                           result=result)
+        seconds = sum(task.duration or 0 for task in project.tasks)
+        result.append(format_duration(seconds) + [any(task.start_time for task in project.tasks)])
+    return render_template(
+        'index.html', form=form, projects=projects,
+        user_id=current_user.id, result=result
+    )
 
 
 @app.route('/projects/<int:user_id>/<int:project_id>', methods=['GET', 'POST'])
 @login_required
 def projects_func(user_id, project_id):
-    if current_user.id == user_id:
-        db_sess = db_session.create_session()
-        form = AddTaskForm()
-        project = db_sess.query(Project).get(project_id)
-        if 'title_project' in request.values:
-            project.title = request.values['title_project']
-            project.github_link = request.values['github_link']
-            db_sess.commit()
-        if form.validate_on_submit():
-            task = Task(title=form.title.data, project_id=project.id)
-            project.tasks.append(task)
-            db_sess.commit()
-        result = []
-        for task in project.tasks:
-            days = divmod(task.duration, 86400)[0]
-            hours = divmod(task.duration - days * 86400, 3600)[0]
-            minutes = divmod(task.duration - hours * 3600 - days * 86400, 60)[0]
-            result.append([int(days), int(hours), int(minutes)])
-        return render_template('project.html', project=project, form=form, back='/main',
-                               result=result)
-    else:
-        return redirect('/main')
+    if current_user.id != user_id:
+        abort(404)
+    db_sess = db_session.create_session()
+    project = get_owned_project(db_sess, project_id)
+    form = AddTaskForm()
+
+    if request.method == 'POST' and 'title_project' in request.form:
+        title = request.form.get('title_project', '').strip()
+        if not title:
+            abort(400)
+        project.title = title
+        project.github_link = normalize_github_link(request.form.get('github_link'))
+        db_sess.commit()
+        return redirect(f'/projects/{user_id}/{project_id}')
+
+    if form.validate_on_submit():
+        project.tasks.append(Task(title=form.title.data.strip()))
+        db_sess.commit()
+        return redirect(f'/projects/{user_id}/{project_id}')
+
+    result = [format_duration(task.duration) for task in project.tasks]
+    return render_template(
+        'project.html', project=project, form=form, back='/main', result=result
+    )
 
 
 @app.route('/tasks/<int:user_id>/<int:project_id>/<int:task_id>', methods=['GET', 'POST'])
 @login_required
 def tasks_func(user_id, project_id, task_id):
-    if current_user.id == user_id:
-        db_sess = db_session.create_session()
-        form = AddTaskForm()
-        project = db_sess.query(Project).get(project_id)
-        task = db_sess.query(Task).get(task_id)
-        if form.validate_on_submit():
-            task.title = form.title.data
-            db_sess.commit()
-        else:
-            form.title.data = task.title
-        return render_template('task.html', project=project, task=task, form=form,
-                               back=f"/projects/{user_id}/{project_id}")
-    else:
-        return redirect('/main')
+    if current_user.id != user_id:
+        abort(404)
+    db_sess = db_session.create_session()
+    project, task = get_owned_task(db_sess, project_id, task_id)
+    form = AddTaskForm()
+    if form.validate_on_submit():
+        task.title = form.title.data.strip()
+        db_sess.commit()
+        return redirect(f'/tasks/{user_id}/{project_id}/{task_id}')
+    form.title.data = task.title
+    return render_template(
+        'task.html', project=project, task=task, form=form,
+        back=f'/projects/{user_id}/{project_id}'
+    )
 
 
-@app.route('/unload-project/<int:user_id>/<int:project_id>', methods=['GET', 'POST'])
+@app.route('/unload-project/<int:user_id>/<int:project_id>')
 @login_required
 def unload_project(user_id, project_id):
-    if current_user.id == user_id:
-        db_sess = db_session.create_session()
-        project = db_sess.query(Project).get(project_id)
-        tmp_durations_project = {}
-        for task in project.tasks:
-            tmp_durations_task = eval(task.duration_per_dates)
-            for i in tmp_durations_task.keys():
-                if i in tmp_durations_project.keys():
-                    tmp_durations_project[i] += tmp_durations_task[i]
-                else:
-                    tmp_durations_project[i] = tmp_durations_task[i]
-        create_unload_file(tmp_durations_project, project.title)
-        return send_file('unload.xlsx', download_name=project.title + '.xlsx')
-    else:
-        return redirect('/main')
+    if current_user.id != user_id:
+        abort(404)
+    db_sess = db_session.create_session()
+    project = get_owned_project(db_sess, project_id)
+    durations = {}
+    for task in project.tasks:
+        for date, seconds in parse_durations(task.duration_per_dates).items():
+            durations[date] = durations.get(date, 0) + seconds
+    return send_export(durations, project.title)
 
 
-@app.route('/unload-task/<int:user_id>/<int:project_id>/<int:task_id>',
-           methods=['GET', 'POST'])
+@app.route('/unload-task/<int:user_id>/<int:project_id>/<int:task_id>')
 @login_required
 def unload_task(user_id, project_id, task_id):
-    if current_user.id == user_id:
-        db_sess = db_session.create_session()
-        task = db_sess.query(Task).get(task_id)
-        create_unload_file(eval(task.duration_per_dates), task.title)
-        return send_file('unload.xlsx', download_name=task.title + '.xlsx')
-    else:
-        return redirect('/main')
+    if current_user.id != user_id:
+        abort(404)
+    db_sess = db_session.create_session()
+    _, task = get_owned_task(db_sess, project_id, task_id)
+    return send_export(parse_durations(task.duration_per_dates), task.title)
 
 
-@app.route('/api/delete-project', methods=['GET', 'POST'])
+@app.route('/api/delete-project', methods=['POST'])
 @login_required
 def delete_project():
-    if current_user.id == request.json['user_id']:
-        db_sess = db_session.create_session()
-        project = db_sess.query(Project).get(request.json['project_id'])
-        db_sess.delete(project)
-        db_sess.commit()
-        return 'success'
-    return 'access deny'
+    payload = request.get_json(silent=True) or {}
+    db_sess = db_session.create_session()
+    project = get_owned_project(db_sess, payload.get('project_id'))
+    db_sess.delete(project)
+    db_sess.commit()
+    return jsonify(status='success')
 
 
-@app.route('/api/delete-task', methods=['GET', 'POST'])
+@app.route('/api/delete-task', methods=['POST'])
 @login_required
 def delete_task():
-    if current_user.id == request.json['user_id']:
-        db_sess = db_session.create_session()
-        project = db_sess.query(Project).get(request.json['project_id'])
-        task = db_sess.query(Task).get(request.json['task_id'])
-        project.tasks.remove(task)
-        db_sess.commit()
-        return 'success'
-    return 'access deny'
+    payload = request.get_json(silent=True) or {}
+    db_sess = db_session.create_session()
+    _, task = get_owned_task(db_sess, payload.get('project_id'), payload.get('task_id'))
+    db_sess.delete(task)
+    db_sess.commit()
+    return jsonify(status='success')
 
 
-@app.route('/api/start-stopwatch', methods=['GET', 'POST'])
+@app.route('/api/start-stopwatch', methods=['POST'])
 @login_required
 def start_stopwatch():
-    if current_user.id == request.json['user_id']:
-        db_sess = db_session.create_session()
-        project = db_sess.query(Project).get(request.json['project_id'])
-        task = db_sess.query(Task).get(request.json['task_id'])
+    payload = request.get_json(silent=True) or {}
+    db_sess = db_session.create_session()
+    _, task = get_owned_task(db_sess, payload.get('project_id'), payload.get('task_id'))
+    if not task.start_time:
         task.start_time = datetime.datetime.now()
         db_sess.commit()
-        return 'success'
-    return 'access deny'
+    return jsonify(status='success')
 
 
-@app.route('/api/stop-stopwatch', methods=['GET', 'POST'])
+@app.route('/api/stop-stopwatch', methods=['POST'])
 @login_required
 def stop_stopwatch():
-    if current_user.id == request.json['user_id']:
-        db_sess = db_session.create_session()
-        project = db_sess.query(Project).get(request.json['project_id'])
-        now = str(datetime.date.today())
-        task = db_sess.query(Task).get(request.json['task_id'])
-        tmp_durations_task = eval(task.duration_per_dates)
-        duration = datetime.datetime.now() - task.start_time
-        seconds = duration.total_seconds()
-        task.duration += seconds
-        if now not in tmp_durations_task.keys():
-            tmp_durations_task[now] = seconds
-        else:
-            tmp_durations_task[now] += seconds
-        task.duration_per_dates = str(tmp_durations_task)
-        task.start_time = None
-        db_sess.commit()
-        days = divmod(task.duration, 86400)[0]
-        hours = divmod(task.duration - days * 86400, 3600)[0]
-        minutes = divmod(task.duration - hours * 3600 - days * 86400, 60)[0]
-        return json.dumps({'days': days, 'hours': hours, 'minutes': minutes})
-    return 'access deny'
+    payload = request.get_json(silent=True) or {}
+    db_sess = db_session.create_session()
+    _, task = get_owned_task(db_sess, payload.get('project_id'), payload.get('task_id'))
+    if not task.start_time:
+        return jsonify(error='Секундомер не запущен.'), 409
+
+    seconds = max(int((datetime.datetime.now() - task.start_time).total_seconds()), 0)
+    durations = parse_durations(task.duration_per_dates)
+    today = str(datetime.date.today())
+    durations[today] = durations.get(today, 0) + seconds
+    task.duration = int(task.duration or 0) + seconds
+    task.duration_per_dates = repr(durations)
+    task.start_time = None
+    db_sess.commit()
+    days, hours, minutes = format_duration(task.duration)
+    return jsonify(days=days, hours=hours, minutes=minutes)
 
 
-@app.route('/api/reset-stopwatch', methods=['GET', 'POST'])
+@app.route('/api/reset-stopwatch', methods=['POST'])
 @login_required
 def reset_stopwatch():
-    if current_user.id == request.json['user_id']:
-        db_sess = db_session.create_session()
-        project = db_sess.query(Project).get(request.json['project_id'])
-        task = db_sess.query(Task).get(request.json['task_id'])
-        task.duration = 0
-        task.duration_per_dates = '{}'
-        task.start_time = None
-        db_sess.commit()
-        return 'success'
-    return 'access deny'
-
-
-def create_unload_file(tmp_durations, title):
-    tmp_durations_keys = list(tmp_durations.keys())
-    workbook = xlsxwriter.Workbook('unload.xlsx')
-    worksheet = workbook.add_worksheet(name=title)
-    worksheet.write(0, 0, "Date")
-    worksheet.write(1, 0, "Time, min")
-    result = 0
-    for i in range(len(tmp_durations_keys)):
-        result += int(divmod(tmp_durations[tmp_durations_keys[i]], 60)[0])
-        worksheet.write(0, i + 1, tmp_durations_keys[i])
-        worksheet.write(1, i + 1, int(divmod(tmp_durations[tmp_durations_keys[i]], 60)[0]))
-    worksheet.write(3, 0, "Result, min: ")
-    worksheet.write(3, 1, result)
-    workbook.close()
-
-
-def main():
-    db_session.global_init('db/manage_time.db')
+    payload = request.get_json(silent=True) or {}
     db_sess = db_session.create_session()
-    admin.add_view(MyModelView(User, db_sess))
-    admin.add_view(MyModelView(Project, db_sess))
-    admin.add_view(MyModelView(Task, db_sess))
-    serve(app, host="0.0.0.0", port=5001)
+    _, task = get_owned_task(db_sess, payload.get('project_id'), payload.get('task_id'))
+    task.duration = 0
+    task.duration_per_dates = '{}'
+    task.start_time = None
+    db_sess.commit()
+    return jsonify(status='success')
+
+
+def create_unload_file(durations, title):
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+    sheet_name = re.sub(r'[\[\]:*?/\\]', '_', title).strip().strip("'")[:31]
+    sheet_name = sheet_name or 'ManageTime'
+    worksheet = workbook.add_worksheet(sheet_name)
+    worksheet.write_string(0, 0, 'Date')
+    worksheet.write_string(1, 0, 'Time, min')
+    result = 0
+    for column, date in enumerate(sorted(durations), start=1):
+        minutes = int(durations[date] // 60)
+        result += minutes
+        worksheet.write_string(0, column, date)
+        worksheet.write_number(1, column, minutes)
+    worksheet.write_string(3, 0, 'Result, min:')
+    worksheet.write_number(3, 1, result)
+    workbook.close()
+    output.seek(0)
+    return output
+
+
+def send_export(durations, title):
+    filename = secure_filename(title) or 'manage-time'
+    return send_file(
+        create_unload_file(durations, title),
+        as_attachment=True,
+        download_name=f'{filename}.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
 
 
 if __name__ == '__main__':
-    main()
+    host = os.getenv('MANAGETIME_HOST', '127.0.0.1')
+    port = int(os.getenv('MANAGETIME_PORT', '5001'))
+    serve(app, host=host, port=port)

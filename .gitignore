@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+
+.venv/
+venv/
+.env
+
+db/manage_time.db
+db/*.db-journal
+db/*.db-shm
+db/*.db-wal
+*.xlsx
+
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

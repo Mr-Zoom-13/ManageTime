@@ -2,25 +2,26 @@
 {% block content %}
 <h1 class="h1_title">
     {% if project.github_link %}
-        <a href="{{ project.github_link }}" class="project_link">
+        <a href="{{ project.github_link }}" class="project_link" target="_blank" rel="noopener noreferrer">
             {{ project.title }}
         </a>
     {% else %}
         {{ project.title }}
     {% endif %}
 </h1>
-<h1 class="h1_title">Refactor project</h1>
+<h1 class="h1_title">Редактирование проекта</h1>
 <form method="post">
-    <label for="title_project">Title</label>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="title_project">Название</label>
     <br>
     <input class="form-control" type="text" value="{{ project.title }}" id="title_project" name="title_project">
     <br>
-    <label for="github_link">Github link</label>
+    <label for="github_link">Ссылка на GitHub</label>
     <br>
     <input class="form-control" type="text" value="{{ project.github_link }}" id="github_link" name="github_link" aria-describedby="basic-addon3">
-    <input type="submit" value="Refactor" class="btn btn-primary refactor_but">
+    <input type="submit" value="Сохранить" class="btn btn-primary refactor_but">
 </form>
-<h1 class="h1_title">Create new task</h1>
+<h1 class="h1_title">Новая задача</h1>
 <form method="post">
     {{ form.hidden_tag() }}
     <p>
@@ -30,8 +31,8 @@
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
     <div>{{ message }}</div>
 </form>
-<h1 class="h1_title">Tasks</h1>
-<input type="text" onkeyup="tableSearch()" id="search-text" placeholder="Search..." class="searcher">
+<h1 class="h1_title">Задачи</h1>
+<input type="search" oninput="tableSearch()" id="search-text" placeholder="Поиск" class="searcher form-control">
 <table class="table text-center" id="info-table">
     <tr><th></th><th></th><th></th><th></th></tr>
     {% for i in range(project.tasks|length) %}
@@ -41,22 +42,22 @@
             <tr id="{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}">
         {% endif %}
             <td><a href="/tasks/{{ project.user_id }}/{{ project.id }}/{{ project.tasks[i].id }}" class="project_link">{{ project.tasks[i].title }}</a></td>
-            <td><a href="/unload-task/{{ project.user_id }}/{{ project.id }}/{{ project.tasks[i].id }}" class="project_link"><img src="/static/img/upload.png" class="img_github"></a></td>
-            <td><span id="duration-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}">Duration: Days: {{ result[i][0] }}; Hours: {{ result[i][1] }}; Minutes: {{ result[i][2] }};</span></td>
+            <td><a href="/unload-task/{{ project.user_id }}/{{ project.id }}/{{ project.tasks[i].id }}" class="project_link"><img src="{{ url_for('static', filename='img/upload.png') }}" class="img_github" alt="Скачать статистику"></a></td>
+            <td><span id="duration-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}">Дни: {{ result[i][0] }}; часы: {{ result[i][1] }}; минуты: {{ result[i][2] }}</span></td>
             {% if project.tasks[i].start_time %}
                 <td>
-                    <button style="display: none" id="start-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}" onclick="start(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}"><img style="width: 50px" id="playButton" src="https://res.cloudinary.com/https-tinloof-com/image/upload/v1593360448/blog/time-in-js/play-button_opkxmt.svg" /></button>
-                    <button id="stop-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}" onclick="stop(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}"><img style="width: 50px" src="https://res.cloudinary.com/https-tinloof-com/image/upload/v1593360448/blog/time-in-js/pause-button_pinhpy.svg" /></button>
-                    <button style="position: absolute" onclick="reset(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}"><img style="width: 50px" id="resetButton" src="https://res.cloudinary.com/https-tinloof-com/image/upload/v1593360448/blog/time-in-js/reset-button_mdv6wf.svg" /></button>
+                    <button style="display: none" id="start-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}" onclick="start(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}" class="timer_button" aria-label="Запустить">▶</button>
+                    <button id="stop-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}" onclick="stop(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}" class="timer_button" aria-label="Остановить">⏸</button>
+                    <button onclick="reset(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}" class="timer_button" aria-label="Сбросить">↺</button>
                 </td>
             {% else %}
                 <td>
-                    <button id="start-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}" onclick="start(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}"><img style="width: 50px" id="playButton" src="https://res.cloudinary.com/https-tinloof-com/image/upload/v1593360448/blog/time-in-js/play-button_opkxmt.svg" /></button>
-                    <button style="display: none" id="stop-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}" onclick="stop(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}"><img style="width: 50px" src="https://res.cloudinary.com/https-tinloof-com/image/upload/v1593360448/blog/time-in-js/pause-button_pinhpy.svg" /></button>
-                    <button style="position: absolute" onclick="reset(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}"><img style="width: 50px" id="resetButton" src="https://res.cloudinary.com/https-tinloof-com/image/upload/v1593360448/blog/time-in-js/reset-button_mdv6wf.svg" /></button>
+                    <button id="start-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}" onclick="start(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}" class="timer_button" aria-label="Запустить">▶</button>
+                    <button style="display: none" id="stop-{{ project.user_id }}-{{ project.id }}-{{ project.tasks[i].id }}" onclick="stop(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}" class="timer_button" aria-label="Остановить">⏸</button>
+                    <button onclick="reset(this)" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}" class="timer_button" aria-label="Сбросить">↺</button>
                 </td>
             {% endif %}
-            <td><button onclick="delete_task(this)" class="btn btn-danger text-white" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}">X</button></td>
+            <td><button onclick="delete_task(this)" class="btn btn-danger text-white" data-project="{{ project.id }}" data-user="{{ project.user_id }}" data-task="{{ project.tasks[i].id }}" aria-label="Удалить задачу">×</button></td>
         </tr>
     {% endfor %}
 </table>

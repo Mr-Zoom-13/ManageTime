@@ -11,5 +11,7 @@ class Project(SqlAlchemyBase, SerializerMixin):
     user_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('users.id'))
     title = sqlalchemy.Column(sqlalchemy.String)
     github_link = sqlalchemy.Column(sqlalchemy.String)
-    tasks = orm.relationship('Task', backref="project_to_tasks")
-    user = orm.relation('User')
+    tasks = orm.relationship(
+        'Task', back_populates='project', cascade='all, delete-orphan'
+    )
+    user = orm.relationship('User')

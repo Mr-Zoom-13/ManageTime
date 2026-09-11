@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1 class="h1_title">Registration</h1>
+<h1 class="h1_title">Регистрация</h1>
 <form action="" method="post">
     {{ form.hidden_tag() }}
     <p>
@@ -31,7 +31,7 @@
         {% endfor %}
     </p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
-    <p><a href="/">Login</a></p>
+    <p><a href="/">Вернуться ко входу</a></p>
     {{message}}
 </form>
 {% endblock %}

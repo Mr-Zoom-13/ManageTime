@@ -2,7 +2,7 @@
 {% block content %}
 <h1 class="h1_title">{{ project.title }}</h1>
 <h1 class="h1_title">{{ task.title }}</h1>
-<h1 class="h1_title">Refactor task</h1>
+<h1 class="h1_title">Редактирование задачи</h1>
 <form action="" method="post">
     {{ form.hidden_tag() }}
     <p>
@@ -14,7 +14,7 @@
             </div>
         {% endfor %}
     </p>
-    <p>{{ form.submit(type="submit", class="btn btn-primary", value="Refactor") }}</p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary", value="Сохранить") }}</p>
     <div>{{ message }}</div>
 </form>
 {% endblock %}

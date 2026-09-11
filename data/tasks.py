@@ -13,4 +13,4 @@ class Task(SqlAlchemyBase, SerializerMixin):
     duration = sqlalchemy.Column(sqlalchemy.Integer, default=0)
     duration_per_dates = sqlalchemy.Column(sqlalchemy.String, default='{}')
     start_time = sqlalchemy.Column(sqlalchemy.DateTime)
-    project = orm.relation('Project', viewonly=True)
+    project = orm.relationship('Project', back_populates='tasks')

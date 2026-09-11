@@ -1,4 +1,12 @@
 body {
+    min-width: 320px;
+}
+
+main form,
+.searcher {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .h1_title {
@@ -47,7 +55,7 @@ body {
   width: 187px;
 }
 
-button {
+.controls button {
   cursor: pointer;
   background: transparent;
   padding: 0;
@@ -68,6 +76,7 @@ button {
     background-color: chartreuse;
     font-family: "Title App";
     height: 55px;
+    position: relative;
 }
 
 @font-face {
@@ -89,14 +98,22 @@ background: url("/static/img/icon2.png");
 }
 
 .exit {
-    position: absolute;
     width: 50px;
-    top: 0;
-    left: 97%;
+}
+
+.logout_form {
+    position: absolute;
+    top: 2px;
+    right: 8px;
+}
+
+.logout_button {
+    background: transparent;
 }
 
 .a_back {
     position: absolute;
+    top: 57px;
     text-decoration: none;
     color: gray;
     font-size: 33px;
@@ -120,4 +137,31 @@ background: url("/static/img/icon2.png");
 
 .title_app_text {
     position: absolute;
+}
+
+.timer_button {
+    min-width: 48px;
+    min-height: 48px;
+    margin: 2px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    background: white;
+    font-size: 26px;
+}
+
+@media (max-width: 768px) {
+    .h1_title {
+        padding: 0 12px;
+        font-size: 36px;
+        line-height: 44px;
+    }
+
+    .a_back {
+        margin-left: 12px;
+    }
+
+    .table {
+        display: block;
+        overflow-x: auto;
+    }
 }
